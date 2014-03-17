@@ -2,6 +2,7 @@ module SimplicialComplex where
 
 import Control.Monad
 import Data.List
+import Matrix
 
 type Simplex = [Int]
 
@@ -67,26 +68,3 @@ bettis sc = [homology k sc | k <- [0..d]]
 euler :: SComplex -> Int
 euler sc = sum $ zipWith (*) (cycle [1,-1]) (bettis sc)
     
--- Matrix Code
-
-rank :: [[Int]] -> Int
-rank m = r where
-    r = if m' == []
-        then 0
-        else 1 + rank (map (cancelZero pivot) (zero++rest))
-    m' = filterRows $ filterColumns m
-    (zero,(pivot:rest)) = break ((0 /=) . head) m' 
-    filterColumns x = map (drop n) x where
-        n = foldl1 min (map countZeros x)
-    filterRows = filter (or . map (0 /=))
-    countZeros = length . takeWhile (0 ==)
-    cancelZero (a:as) (b:bs) = zipWith (\x y -> a*y-b*x) as bs
-
-matrix :: [Simplex] -> [Simplex] -> [[Int]]
-matrix chain1 chain2 = map (coefficients chain1 . diff) chain2 where
-    coefficients chain x = map (flip coefficient x) chain
-    coefficient e = sum . lkup e
-
-lkup :: Simplex -> [(Simplex,Int)] -> [Int]
-lkup k [] = []
-lkup k ((k',v):xs) = if k == k' then return v else lkup k xs
